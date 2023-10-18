@@ -1,0 +1,4 @@
+/home/jerry_wang/ece1747/lab1/build/CMakeFiles/ForceCalculation.dir
+/home/jerry_wang/ece1747/lab1/build/CMakeFiles/ForceCalculationMPI.dir
+/home/jerry_wang/ece1747/lab1/build/CMakeFiles/edit_cache.dir
+/home/jerry_wang/ece1747/lab1/build/CMakeFiles/rebuild_cache.dir
