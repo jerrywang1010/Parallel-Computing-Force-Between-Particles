@@ -8,18 +8,23 @@
 MPI_Datatype MPI_POINT_CHARGE;
 std::mutex mtx;
 
-std::vector<double> thread_worker(std::queue<std::vector<point_charge>>& charges_queue) {
+std::vector<double> thread_worker(std::queue<std::vector<point_charge>>& charges_queue, const std::vector<point_charge>& all_charges) {
     std::vector<double> results;
     while (true) {
         std::vector<point_charge> charges;
         {
             std::lock_guard<std::mutex> lk(mtx);
-            if (charges_queue.empty()) return results;
+            if (charges_queue.empty()) {
+                return results;
+            }
             charges = std::move(charges_queue.front());
             charges_queue.pop();
         }
         for (const auto & charge : charges) {
-            results.push_back(kq1q2 / distance_between(charge, charges[charge.nearest_neighbor_idx]));
+            results.push_back(kq1q2 / distance_between_square(charge, all_charges[charge.nearest_neighbor_idx]));
+            // std::cout << "calculating force between x1=" << charge.x << ", y1=" << charge.y 
+            //           << ", x2=" << all_charges[charge.nearest_neighbor_idx].x << ", y2=" << all_charges[charge.nearest_neighbor_idx].y
+            //           << ", force=" << kq1q2 / distance_between_square(charge, all_charges[charge.nearest_neighbor_idx]) << std::endl;
         }
     }
 }
@@ -48,15 +53,23 @@ int main(int argc, char** argv) {
     const int num_threads = std::stoi(argv[1]);
     const int num_particles = std::stoi(argv[2]);
 
-    std::vector<point_charge> data;
+    std::vector<point_charge> all_point_charges;
     int data_size = 0;
     if (rank == 0) {
-        data = std::move(setup_point_charges("../particles-student-1.csv", num_particles));
-        data_size = data.size();
+        all_point_charges = std::move(setup_point_charges("../particles-student-1.csv", num_particles));
+        data_size = all_point_charges.size();
     }
 
     // Broadcast the size of the input to all processes
     MPI_Bcast(&data_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    // Resize the vector for all other processes
+    if (rank != 0) {
+        all_point_charges.resize(data_size);
+    }
+
+    // Broadcast all point charges for read, so they don't need file IO
+    MPI_Bcast(&all_point_charges[0], data_size, MPI_POINT_CHARGE, 0, MPI_COMM_WORLD);
     
     int remainder = data_size % size;
     int chunk_size = data_size / size;
@@ -64,34 +77,35 @@ int main(int argc, char** argv) {
 
     std::vector<point_charge> local_data(adjusted_chunk_size);
 
-    MPI_Scatter(&data[0], adjusted_chunk_size, MPI_POINT_CHARGE, &local_data[0], adjusted_chunk_size, MPI_POINT_CHARGE, 0, MPI_COMM_WORLD);
+    MPI_Scatter(&all_point_charges[0], adjusted_chunk_size, MPI_POINT_CHARGE, &local_data[0], adjusted_chunk_size, MPI_POINT_CHARGE, 0, MPI_COMM_WORLD);
 
     std::queue<std::vector<point_charge>> worker_queue;
     int thread_chunk_size = adjusted_chunk_size / num_threads;
     for (int i = 0; i < num_threads; i ++) {
         int start = i * thread_chunk_size;
         int end = (i == num_threads - 1) ? adjusted_chunk_size : start + thread_chunk_size;
-        std::cout << "Rank=" << rank << ", thread #" << i << ", start=" << start << ", end=" << end << ", start.x=" 
-                    << local_data[start].x << ", start.y=" << local_data[start].y << std::endl;
+        // std::cout << "Rank=" << rank << ", thread #" << i << ", start=" << start << ", end=" << end << ", start.x=" 
+        //             << local_data[start].x << ", start.y=" << local_data[start].y << std::endl;
         worker_queue.push(std::vector<point_charge>(local_data.begin() + start, local_data.begin() + end));
     }
 
     std::vector<std::future<std::vector<double>>> futures;
     for (int i = 0; i < num_threads; i ++) {
-        futures.push_back(std::async(std::launch::async, thread_worker, std::ref(worker_queue)));
+        futures.push_back(std::async(std::launch::async, thread_worker, std::ref(worker_queue), std::cref(all_point_charges)));
     }
 
     std::vector<double> local_result;
+    int t_id = 0;
     for (auto & f : futures) {
         std::vector<double> thread_result = f.get();
         local_result.insert(local_result.end(), thread_result.begin(), thread_result.end());
     }
 
-    std::vector<double> final_results(data.size());
+    std::vector<double> final_results(all_point_charges.size());
     MPI_Gather(&local_result[0], adjusted_chunk_size, MPI_DOUBLE, &final_results[0], adjusted_chunk_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     if (rank == 0) {
-        // print_force(final_results);
+        print_force(final_results);
     }
 
     MPI_Type_free(&MPI_POINT_CHARGE);

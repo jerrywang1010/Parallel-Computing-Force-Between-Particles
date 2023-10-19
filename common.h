@@ -13,17 +13,17 @@ struct point_charge {
     int nearest_neighbor_idx;
 };
 
-inline double distance_between(const point_charge & p1, const point_charge & p2) {
-    return sqrt(pow(p1.x - p2.x, 2) + pow(p1.y - p2.y, 2)) * 1e-10;
+inline double distance_between_square(const point_charge & p1, const point_charge & p2) {
+    return (pow(p1.x - p2.x, 2) + pow(p1.y - p2.y, 2)) * 1e-20;
 }
 
 void print_force(const std::vector<double> forces) {
     for (int i = 0; i < forces.size(); i ++) {
-        std::cout << "ID: " << i << ", Force=" << forces[i] << std::endl;
+        std::cout << "ID: " << i + 1 << ", Force=" << forces[i] << std::endl;
     }
 }
 
-std::vector<point_charge> setup_point_charges(const std::string& filename, int max_line=1E9) {
+std::vector<point_charge> setup_point_charges(const std::string& filename, int max_line=1000) {
     std::vector<point_charge> charges;
     std::ifstream file(filename);
     if (!file) {
@@ -48,15 +48,24 @@ std::vector<point_charge> setup_point_charges(const std::string& filename, int m
         std::cerr << "too few points!" << std::endl;
         return charges;
     }
+
     charges[0].nearest_neighbor_idx = 1;
     charges.back().nearest_neighbor_idx = charges.size() - 2;
     for (int i = 1; i < charges.size() - 1; i ++) {
-        double prev_distance = distance_between(charges[i], charges[i - 1]);
-        double next_distance = distance_between(charges[i], charges[i + 1]);
+        double prev_distance = distance_between_square(charges[i], charges[i - 1]);
+        double next_distance = distance_between_square(charges[i], charges[i + 1]);
         if (prev_distance < next_distance) {
             charges[i].nearest_neighbor_idx = i - 1;
         } else {
             charges[i].nearest_neighbor_idx = i + 1;
+        }
+    }
+
+    int old_size = charges.size();
+    while (charges.size() < max_line) {
+        for (int i = 0; i < old_size; i ++) {
+            charges.push_back(charges[i]);
+            if (charges.size() == max_line) break;
         }
     }
     return charges;
