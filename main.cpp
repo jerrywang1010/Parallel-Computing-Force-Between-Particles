@@ -5,18 +5,18 @@
 
 
 void test_file_not_found() {
-    std::vector<point_charge> charges = setup_point_charges("../nonexistent-file.csv");
+    std::vector<point_charge> charges = setup_point_charges("./nonexistent-file.csv");
     assert(charges.empty());
 }
 
 void test_file_open() {
-    std::vector<point_charge> charges = setup_point_charges("../particles-student-1.csv", 10);
+    std::vector<point_charge> charges = setup_point_charges("./particles-student-1.csv", 10);
     assert(!charges.empty());
 }
 
 void test_file_content() {
-    std::vector<point_charge> charges = setup_point_charges("../particles-student-1.csv", 1000);
-    std::ifstream file("../particles-student-1.csv");
+    std::vector<point_charge> charges = setup_point_charges("./particles-student-1.csv", 1000);
+    std::ifstream file("./particles-student-1.csv");
     std::string line;
     int line_count = 0;
     while (getline(file, line) && line_count < charges.size()) {
@@ -54,7 +54,7 @@ std::vector<double> multithread_calculation(const std::vector<point_charge>& cha
     int remainder  = charges.size() % num_threads;
 
     if (chunk_size < 1) {
-        std::cerr << "too many threads, not enough data!" << std::endl;
+        std::cerr << "too many threads, not enough data!" << " num_threads=" << num_threads << ", num_particles=" << charges.size() << std::endl;
         return ans;
     }
 
@@ -98,7 +98,7 @@ int main(int argc, char* argv[]) {
         num_threads = std::stoi(std::string(argv[3]).substr(12));
     }
 
-    std::vector<point_charge> charges = setup_point_charges("../particles-student-1.csv", num_particles);
+    std::vector<point_charge> charges = setup_point_charges("./particles-student-1.csv", num_particles);
     std::vector<double> ans;
 
     auto start = std::chrono::high_resolution_clock::now();

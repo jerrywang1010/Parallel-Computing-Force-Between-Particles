@@ -8,20 +8,20 @@
 MPI_Datatype MPI_POINT_CHARGE;
 std::mutex mtx;
 
-std::vector<double> thread_worker(std::queue<std::vector<point_charge>>& charges_queue, const std::vector<point_charge>& all_charges) {
-    std::vector<double> results;
+
+void thread_worker(std::queue<std::vector<point_charge>>& charges_queue, const std::vector<point_charge>& all_charges, std::vector<double>& results, int offset) {
     while (true) {
         std::vector<point_charge> charges;
         {
             std::lock_guard<std::mutex> lk(mtx);
             if (charges_queue.empty()) {
-                return results;
+                return;
             }
             charges = std::move(charges_queue.front());
             charges_queue.pop();
         }
         for (const auto & charge : charges) {
-            results.push_back(kq1q2 / distance_between_square(charge, all_charges[charge.nearest_neighbor_idx]));
+            results[charge.idx - offset] = (kq1q2 / distance_between_square(charge, all_charges[charge.nearest_neighbor_idx]));
             // std::cout << "calculating force between x1=" << charge.x << ", y1=" << charge.y 
             //           << ", x2=" << all_charges[charge.nearest_neighbor_idx].x << ", y2=" << all_charges[charge.nearest_neighbor_idx].y
             //           << ", force=" << kq1q2 / distance_between_square(charge, all_charges[charge.nearest_neighbor_idx]) << std::endl;
@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
     std::vector<point_charge> all_point_charges;
     int data_size = 0;
     if (rank == 0) {
-        all_point_charges = std::move(setup_point_charges("../particles-student-1.csv", num_particles));
+        all_point_charges = std::move(setup_point_charges("./particles-student-1.csv", num_particles));
         data_size = all_point_charges.size();
     }
 
@@ -70,15 +70,23 @@ int main(int argc, char** argv) {
 
     // Broadcast all point charges for read, so they don't need file IO
     MPI_Bcast(&all_point_charges[0], data_size, MPI_POINT_CHARGE, 0, MPI_COMM_WORLD);
-    
-    int remainder = data_size % size;
-    int chunk_size = data_size / size;
-    int adjusted_chunk_size = (rank < remainder) ? chunk_size + 1 : chunk_size;
 
+    std::vector<int> sendcounts(size);
+    std::vector<int> displs(size);
+    int sum = 0;
+    for (int i = 0; i < size; i++) {
+        sendcounts[i] = (i < data_size % size) ? data_size / size + 1 : data_size / size;
+        displs[i] = sum;
+        sum += sendcounts[i];
+    }
+
+    int adjusted_chunk_size = sendcounts[rank];
     std::vector<point_charge> local_data(adjusted_chunk_size);
+    // std::cout << "Rank=" << rank << ", adjusted_chunk_size=" << adjusted_chunk_size << std::endl;
 
-    MPI_Scatter(&all_point_charges[0], adjusted_chunk_size, MPI_POINT_CHARGE, &local_data[0], adjusted_chunk_size, MPI_POINT_CHARGE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&all_point_charges[0], sendcounts.data(), displs.data(), MPI_POINT_CHARGE, &local_data[0], sendcounts[rank], MPI_POINT_CHARGE, 0, MPI_COMM_WORLD);
 
+    std::vector<double> local_result(adjusted_chunk_size, -1);
     std::queue<std::vector<point_charge>> worker_queue;
     int thread_chunk_size = adjusted_chunk_size / num_threads;
     for (int i = 0; i < num_threads; i ++) {
@@ -89,20 +97,22 @@ int main(int argc, char** argv) {
         worker_queue.push(std::vector<point_charge>(local_data.begin() + start, local_data.begin() + end));
     }
 
-    std::vector<std::future<std::vector<double>>> futures;
+    std::vector<std::future<void>> futures;
     for (int i = 0; i < num_threads; i ++) {
-        futures.push_back(std::async(std::launch::async, thread_worker, std::ref(worker_queue), std::cref(all_point_charges)));
+        futures.push_back(std::async(std::launch::async, thread_worker, std::ref(worker_queue), std::cref(all_point_charges), std::ref(local_result), local_data.begin()->idx));
     }
 
-    std::vector<double> local_result;
-    int t_id = 0;
     for (auto & f : futures) {
-        std::vector<double> thread_result = f.get();
-        local_result.insert(local_result.end(), thread_result.begin(), thread_result.end());
+        f.get();
     }
 
-    std::vector<double> final_results(all_point_charges.size());
-    MPI_Gather(&local_result[0], adjusted_chunk_size, MPI_DOUBLE, &final_results[0], adjusted_chunk_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    std::vector<double> final_results;
+    if (rank == 0) {
+        final_results.resize(all_point_charges.size());
+    }
+    // MPI_Gather(&local_result[0], adjusted_chunk_size, MPI_DOUBLE, &final_results[0], adjusted_chunk_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    // MPI_Gatherv(&local_result[0], adjusted_chunk_size, MPI_DOUBLE, &final_results[0], sendcounts.data(), displs.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(local_result.data(), local_result.size(), MPI_DOUBLE, final_results.data(), sendcounts.data(), displs.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     if (rank == 0) {
         print_force(final_results);

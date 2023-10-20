@@ -8,6 +8,7 @@
 constexpr double kq1q2 = 8.99e9 * 1.6e-19 * 1.6e-19;
 
 struct point_charge {
+    int idx;
     int x;
     int y;
     int nearest_neighbor_idx;
@@ -36,7 +37,7 @@ std::vector<point_charge> setup_point_charges(const std::string& filename, int m
         std::stringstream ss(line);
         point_charge charge;
         char comma, polarity;
-
+        charge.idx = line_count;
         ss >> charge.x >> comma >> charge.y >> comma >> polarity;
         charges.push_back(charge);
         line_count ++;
@@ -65,6 +66,7 @@ std::vector<point_charge> setup_point_charges(const std::string& filename, int m
     while (charges.size() < max_line) {
         for (int i = 0; i < old_size; i ++) {
             charges.push_back(charges[i]);
+            charges.back().idx = charges.size() - 1;
             if (charges.size() == max_line) break;
         }
     }
