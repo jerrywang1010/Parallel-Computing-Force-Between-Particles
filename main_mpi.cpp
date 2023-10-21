@@ -39,15 +39,16 @@ int main(int argc, char** argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    int blockLengths[3] = {1, 1, 1};
-    MPI_Aint offsets[3] = {
+    int blockLengths[4] = {1, 1, 1, 1};
+    MPI_Aint offsets[4] = {
+        offsetof(point_charge, idx),
         offsetof(point_charge, x),
         offsetof(point_charge, y),
         offsetof(point_charge, nearest_neighbor_idx)
     };
 
-    MPI_Datatype types[3] = {MPI_INT, MPI_INT, MPI_INT};
-    MPI_Type_create_struct(3, blockLengths, offsets, types, &MPI_POINT_CHARGE);
+    MPI_Datatype types[4] = {MPI_INT, MPI_INT, MPI_INT, MPI_INT};
+    MPI_Type_create_struct(4, blockLengths, offsets, types, &MPI_POINT_CHARGE);
     MPI_Type_commit(&MPI_POINT_CHARGE);
 
     const int num_threads = std::stoi(argv[1]);
@@ -82,7 +83,6 @@ int main(int argc, char** argv) {
 
     int adjusted_chunk_size = sendcounts[rank];
     std::vector<point_charge> local_data(adjusted_chunk_size);
-    // std::cout << "Rank=" << rank << ", adjusted_chunk_size=" << adjusted_chunk_size << std::endl;
 
     MPI_Scatterv(&all_point_charges[0], sendcounts.data(), displs.data(), MPI_POINT_CHARGE, &local_data[0], sendcounts[rank], MPI_POINT_CHARGE, 0, MPI_COMM_WORLD);
 
@@ -92,8 +92,7 @@ int main(int argc, char** argv) {
     for (int i = 0; i < num_threads; i ++) {
         int start = i * thread_chunk_size;
         int end = (i == num_threads - 1) ? adjusted_chunk_size : start + thread_chunk_size;
-        // std::cout << "Rank=" << rank << ", thread #" << i << ", start=" << start << ", end=" << end << ", start.x=" 
-        //             << local_data[start].x << ", start.y=" << local_data[start].y << std::endl;
+        // std::cout << "Rank=" << rank << ", thread #" << i << ", start=" << start << ", end=" << end << ", start_idx=" << (local_data.begin() + start)->idx << ", end_idx=" << (local_data.begin() + end)->idx << std::endl;
         worker_queue.push(std::vector<point_charge>(local_data.begin() + start, local_data.begin() + end));
     }
 
