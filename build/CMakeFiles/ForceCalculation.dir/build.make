@@ -73,15 +73,15 @@ CMakeFiles/ForceCalculation.dir/main.cpp.o: CMakeFiles/ForceCalculation.dir/flag
 CMakeFiles/ForceCalculation.dir/main.cpp.o: ../main.cpp
 CMakeFiles/ForceCalculation.dir/main.cpp.o: CMakeFiles/ForceCalculation.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/jerry_wang/ece1747/lab1/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/ForceCalculation.dir/main.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/ForceCalculation.dir/main.cpp.o -MF CMakeFiles/ForceCalculation.dir/main.cpp.o.d -o CMakeFiles/ForceCalculation.dir/main.cpp.o -c /home/jerry_wang/ece1747/lab1/main.cpp
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/ForceCalculation.dir/main.cpp.o -MF CMakeFiles/ForceCalculation.dir/main.cpp.o.d -o CMakeFiles/ForceCalculation.dir/main.cpp.o -c /home/jerry_wang/ece1747/lab1/main.cpp
 
 CMakeFiles/ForceCalculation.dir/main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/ForceCalculation.dir/main.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/jerry_wang/ece1747/lab1/main.cpp > CMakeFiles/ForceCalculation.dir/main.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/jerry_wang/ece1747/lab1/main.cpp > CMakeFiles/ForceCalculation.dir/main.cpp.i
 
 CMakeFiles/ForceCalculation.dir/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/ForceCalculation.dir/main.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/jerry_wang/ece1747/lab1/main.cpp -o CMakeFiles/ForceCalculation.dir/main.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/jerry_wang/ece1747/lab1/main.cpp -o CMakeFiles/ForceCalculation.dir/main.cpp.s
 
 # Object files for target ForceCalculation
 ForceCalculation_OBJECTS = \

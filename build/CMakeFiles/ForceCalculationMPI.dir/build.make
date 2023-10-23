@@ -73,15 +73,15 @@ CMakeFiles/ForceCalculationMPI.dir/main_mpi.cpp.o: CMakeFiles/ForceCalculationMP
 CMakeFiles/ForceCalculationMPI.dir/main_mpi.cpp.o: ../main_mpi.cpp
 CMakeFiles/ForceCalculationMPI.dir/main_mpi.cpp.o: CMakeFiles/ForceCalculationMPI.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/jerry_wang/ece1747/lab1/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/ForceCalculationMPI.dir/main_mpi.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/ForceCalculationMPI.dir/main_mpi.cpp.o -MF CMakeFiles/ForceCalculationMPI.dir/main_mpi.cpp.o.d -o CMakeFiles/ForceCalculationMPI.dir/main_mpi.cpp.o -c /home/jerry_wang/ece1747/lab1/main_mpi.cpp
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/ForceCalculationMPI.dir/main_mpi.cpp.o -MF CMakeFiles/ForceCalculationMPI.dir/main_mpi.cpp.o.d -o CMakeFiles/ForceCalculationMPI.dir/main_mpi.cpp.o -c /home/jerry_wang/ece1747/lab1/main_mpi.cpp
 
 CMakeFiles/ForceCalculationMPI.dir/main_mpi.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/ForceCalculationMPI.dir/main_mpi.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/jerry_wang/ece1747/lab1/main_mpi.cpp > CMakeFiles/ForceCalculationMPI.dir/main_mpi.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/jerry_wang/ece1747/lab1/main_mpi.cpp > CMakeFiles/ForceCalculationMPI.dir/main_mpi.cpp.i
 
 CMakeFiles/ForceCalculationMPI.dir/main_mpi.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/ForceCalculationMPI.dir/main_mpi.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/jerry_wang/ece1747/lab1/main_mpi.cpp -o CMakeFiles/ForceCalculationMPI.dir/main_mpi.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/jerry_wang/ece1747/lab1/main_mpi.cpp -o CMakeFiles/ForceCalculationMPI.dir/main_mpi.cpp.s
 
 # Object files for target ForceCalculationMPI
 ForceCalculationMPI_OBJECTS = \

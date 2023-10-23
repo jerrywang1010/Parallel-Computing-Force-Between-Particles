@@ -31,7 +31,7 @@ void thread_worker(std::queue<std::vector<point_charge>>& charges_queue, const s
 
 int main(int argc, char** argv) {
     if (argc != 3) {
-        std::cerr << "Usage: mpirun -np {num_proc} ./ForceCalculationMPI {num_threads} {num_particles}" << std::endl;
+        std::cerr << "Usage: mpirun -np {num_proc} ./build/ForceCalculationMPI {num_threads} {num_particles}" << std::endl;
         return -1;
     }
     int rank, size;
@@ -57,10 +57,19 @@ int main(int argc, char** argv) {
     std::vector<point_charge> all_point_charges;
     int data_size = 0;
     if (rank == 0) {
+        double start_time = MPI_Wtime();
         all_point_charges = std::move(setup_point_charges("./particles-student-1.csv", num_particles));
+        double end_time = MPI_Wtime();
+        double total_time = end_time - start_time;
+        std::cout << "Time to read file: " << total_time * 1E6 << " microseconds." << std::endl;
         data_size = all_point_charges.size();
     }
 
+
+    double start_time = 0;
+    if (rank == 0) {
+        start_time = MPI_Wtime();
+    }
     // Broadcast the size of the input to all processes
     MPI_Bcast(&data_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -114,7 +123,10 @@ int main(int argc, char** argv) {
     MPI_Gatherv(local_result.data(), local_result.size(), MPI_DOUBLE, final_results.data(), sendcounts.data(), displs.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     if (rank == 0) {
-        print_force(final_results);
+        // print_force(final_results);
+        double end_time = MPI_Wtime();
+        double total_time = end_time - start_time;
+        std::cout << "Time to calculate force: " << total_time * 1E6 << " microseconds." << std::endl;
     }
 
     MPI_Type_free(&MPI_POINT_CHARGE);

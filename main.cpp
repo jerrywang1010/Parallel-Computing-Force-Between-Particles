@@ -39,16 +39,27 @@ std::vector<double> serial_calculation(const std::vector<point_charge>& charges)
 }
 
 
+// large time between the earliest thread stated that the main thread finished creating threads, i.e. started to wait for join
+
 void thread_worker(const std::vector<point_charge> charges, int start, int end, std::vector<double>& ans) {
+    std::thread::id thread_id = std::this_thread::get_id();
+    auto start_time = std::chrono::high_resolution_clock::now();
+    auto start_now = std::chrono::system_clock::now();
     for (int i = start; i < end; i ++) {
         ans[i] = kq1q2 / distance_between_square(charges[i], charges[charges[i].nearest_neighbor_idx]);
     }
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+    auto now = std::chrono::system_clock::now();
+    // std::cout << "Thread: " << thread_id << " finished in " << duration.count() 
+    //         << " microseconds, started at:" << std::chrono::duration_cast<std::chrono::microseconds>(start_now.time_since_epoch()).count()
+    //         << ", finished at:" << std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count() << "\n";
 }
 
 
 std::vector<double> multithread_calculation(const std::vector<point_charge>& charges, int num_threads=4) {
     std::vector<double> ans(charges.size());
-    std::vector<std::thread> threads;
+    std::vector<std::thread> threads(num_threads);
 
     int chunk_size = charges.size() / num_threads;
     int remainder  = charges.size() % num_threads;
@@ -61,13 +72,27 @@ std::vector<double> multithread_calculation(const std::vector<point_charge>& cha
     int start = 0;
     for(int i = 0; i < num_threads; i ++) {
         int size = (i < remainder) ? chunk_size + 1 : chunk_size;
-        threads.push_back(std::thread(thread_worker, std::cref(charges), start, start + size, std::ref(ans)));
+        // threads.push_back(std::thread(thread_worker, std::cref(charges), start, start + size, std::ref(ans)));
+        threads[i] = (std::thread(thread_worker, std::cref(charges), start, start + size, std::ref(ans)));
         start += size;
     }
 
-    for (auto & thread : threads) {
-        thread.join();
+
+    // for (auto & thread : threads) {
+    //     thread.join();
+    // }
+    // auto join_start_time = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < threads.size(); i ++) {
+        // auto join_start_time_i = std::chrono::system_clock::now();
+        // auto join_start = std::chrono::high_resolution_clock::now();
+        // std::thread::id tid = threads[i].get_id();
+        threads[i].join();
+        // auto join_end = std::chrono::high_resolution_clock::now();
+        // auto join_duration = std::chrono::duration_cast<std::chrono::microseconds>(join_end - join_start).count();
+        // std::cout << "Time to join thread id:" << tid << " : " << join_duration << " microseconds. started at: " << std::chrono::duration_cast<std::chrono::microseconds>(join_start_time_i.time_since_epoch()).count() << std::endl;
     }
+    // auto join_end_time = std::chrono::high_resolution_clock::now();
+    // std::cout << "Time to join thread: " << std::chrono::duration_cast<std::chrono::microseconds>(join_end_time - join_start_time).count() << " microseconds." << std::endl;
     return ans;
 }
 
@@ -77,9 +102,13 @@ int main(int argc, char* argv[]) {
         std::cerr << "Usage: ./ForceCalculation mode={1-2} num_particles={d+} num_threads={d+}" << std::endl;
         return -1;
     }
+
+    auto start = std::chrono::high_resolution_clock::now();
     test_file_not_found();
     test_file_open();
     test_file_content();
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout << "Time to run tests: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds." << std::endl;
 
     int mode = std::stoi(std::string(argv[1]).substr(5));
     int num_particles = std::stoi(std::string(argv[2]).substr(14));
@@ -98,10 +127,14 @@ int main(int argc, char* argv[]) {
         num_threads = std::stoi(std::string(argv[3]).substr(12));
     }
 
+    start = std::chrono::high_resolution_clock::now();
     std::vector<point_charge> charges = setup_point_charges("./particles-student-1.csv", num_particles);
+    end = std::chrono::high_resolution_clock::now();
+    std::cout << "Time to read file: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds." << std::endl;
+
     std::vector<double> ans;
 
-    auto start = std::chrono::high_resolution_clock::now();
+    start = std::chrono::high_resolution_clock::now();
     switch (mode)
     {
         case 1:
@@ -116,12 +149,9 @@ int main(int argc, char* argv[]) {
             std::cerr << "Invalid mode value: " << mode << std::endl;
             return -1;
     }
-
-    auto end = std::chrono::high_resolution_clock::now();
+    end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-    std::cout << "Function for mode=" << mode << " took " << duration << " microseconds." << std::endl;
-
-    print_force(ans);
-    
+    std::cout << "Time to calculate force for mode=" << mode << " took " << duration << " microseconds." << std::endl;
+    // print_force(ans);
     return 0;
 }

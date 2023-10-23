@@ -1,1 +1,1 @@
-/usr/bin/c++ -g -rdynamic CMakeFiles/ForceCalculationMPI.dir/main_mpi.cpp.o -o ForceCalculationMPI  -Wl,-rpath,/usr/lib/x86_64-linux-gnu/openmpi/lib /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi_cxx.so /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so 
+/usr/bin/g++ -g -rdynamic CMakeFiles/ForceCalculationMPI.dir/main_mpi.cpp.o -o ForceCalculationMPI  -Wl,-rpath,/usr/lib/x86_64-linux-gnu/openmpi/lib /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi_cxx.so /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so 
