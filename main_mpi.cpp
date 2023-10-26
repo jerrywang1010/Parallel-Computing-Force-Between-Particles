@@ -94,6 +94,13 @@ int main(int argc, char** argv) {
     std::vector<point_charge> local_data(adjusted_chunk_size);
 
     MPI_Scatterv(&all_point_charges[0], sendcounts.data(), displs.data(), MPI_POINT_CHARGE, &local_data[0], sendcounts[rank], MPI_POINT_CHARGE, 0, MPI_COMM_WORLD);
+    
+    if (rank == 0) {
+        double end_time = MPI_Wtime();
+        double total_time = end_time - start_time;
+        std::cout << "Time to partition input: " << total_time * 1E6 << " microseconds." << std::endl;
+        start_time = MPI_Wtime();
+    }
 
     std::vector<double> local_result(adjusted_chunk_size, -1);
     std::queue<std::vector<point_charge>> worker_queue;
